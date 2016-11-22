@@ -1,0 +1,72 @@
+package com.guantang.cangkuonline.fragment;
+
+import com.guantang.cangkuonline.R;
+import com.guantang.cangkuonline.activity.AddVisitActivity;
+import com.guantang.cangkuonline.activity.CustomerListActivity;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+public class ConsumerFragment extends Fragment implements OnClickListener{
+	
+	private LinearLayout customerLayout,supplierLayout,addvisitorLayout;
+	
+	@Override
+	public void onAttach(Activity activity) {
+		// TODO 自动生成的方法存根
+		super.onAttach(activity);
+	}
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		// TODO 自动生成的方法存根
+		super.onCreate(savedInstanceState);
+	}
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		// TODO 自动生成的方法存根
+		View view = inflater.inflate(R.layout.consumerfragment_layout, null);
+		return view;
+	}
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		// TODO 自动生成的方法存根
+		super.onActivityCreated(savedInstanceState);
+		customerLayout = (LinearLayout) getView().findViewById(R.id.customerLayout);
+		supplierLayout = (LinearLayout) getView().findViewById(R.id.supplierLayout);
+		addvisitorLayout = (LinearLayout) getView().findViewById(R.id.addvisitorLayout);
+		
+		customerLayout.setOnClickListener(this);
+		supplierLayout.setOnClickListener(this);
+		addvisitorLayout.setOnClickListener(this);
+	}
+	@Override
+	public void onClick(View v) {
+		// TODO 自动生成的方法存根
+		Intent intent= new Intent();
+		switch(v.getId()){
+		case R.id.customerLayout:
+			intent.setClass(getActivity(), CustomerListActivity.class);
+			intent.putExtra("dwType", "1");//1:客户，2:供应商，3:即是客户也是供应商
+			startActivity(intent);
+			break;
+		case R.id.supplierLayout:
+			intent.setClass(getActivity(), CustomerListActivity.class);
+			intent.putExtra("dwType", "2");
+			startActivity(intent);
+			break;
+		case R.id.addvisitorLayout:
+			intent.setClass(getActivity(), AddVisitActivity.class);
+			startActivity(intent);
+			break;
+		}
+	}
+}

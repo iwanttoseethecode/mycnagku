@@ -1,0 +1,462 @@
+package com.guantang.cangkuonline.activity;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.SimpleAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.guantang.cangkuonline.R;
+import com.guantang.cangkuonline.XListView.XListView;
+import com.guantang.cangkuonline.XListView.XListView.IXListViewListener;
+import com.guantang.cangkuonline.database.DataBaseMethod;
+import com.guantang.cangkuonline.shareprefence.ShareprefenceBean;
+import com.guantang.cangkuonline.webservice.WebserviceImport;
+
+public class LB_Chose extends Activity implements OnClickListener,
+		OnItemClickListener, IXListViewListener {
+	private XListView mListView;
+	private ImageButton backBtn;
+	private List<Map<String, Object>> ls, ls2;
+	private MySimpleAdapter mySimpleAdapter;
+	private String path = "", index = "", lbid = "", pid = "0";
+	private String lbs = "";
+	private Button okBtn, upBtn;
+	private TextView lbtextView;
+	private int position;
+	private ProgressDialog pro_dialog;
+	private ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+	private SharedPreferences mSharedPreferences;
+	private DataBaseMethod dm = new DataBaseMethod(this);
+
+	/**
+	 * 添加一个信号量，防止列表界面还没刷新数据就变更了
+	 * */
+	private volatile Semaphore mSemaphore = new Semaphore(1);
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO 自动生成的方法存根
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.lb_chose);
+		mSharedPreferences = getSharedPreferences(
+				ShareprefenceBean.SHAREPREFENCE_NAME, Context.MODE_PRIVATE);
+		initControl();
+		init();
+	}
+
+	public void initControl() {
+		backBtn = (ImageButton) findViewById(R.id.back);
+		lbtextView = (TextView) findViewById(R.id.lbtext);
+		okBtn = (Button) findViewById(R.id.ok);
+//		mListView = (XListView) findViewById(R.id.lblist);
+//		upBtn = (Button) findViewById(R.id.up);
+		backBtn.setOnClickListener(this);
+		upBtn.setOnClickListener(this);
+		okBtn.setOnClickListener(this);
+
+		mListView.setOnItemClickListener(this);
+		mListView.setXListViewListener(this);
+
+		mySimpleAdapter = new MySimpleAdapter(this);
+		mListView.setAdapter(mySimpleAdapter);
+	}
+
+	public void init() {
+		ls = new ArrayList<Map<String, Object>>();
+		ls2 = new ArrayList<Map<String, Object>>();
+		if (mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1) == 1) {
+			mListView.setPullLoadEnable(true);// 设置可以加载更多
+			mListView.setPullRefreshEnable(true);// 设置可以刷新
+			if (WebserviceImport.isOpenNetwork(this)) {
+				// pro_dialog = ProgressDialog.show(this, null, "正在加载数据……");
+				cachedThreadPool.execute(run_start);
+			} else {
+				Toast.makeText(this, "网络未连接", Toast.LENGTH_SHORT).show();
+			}
+		} else if (mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1) == -1) {
+			mListView.setPullLoadEnable(false);// 设置可以加载更多
+			mListView.setPullRefreshEnable(false);// 设置可以刷新
+			lbtextView.setText("未选择");
+			ls = dm.GetLB("0");
+			setAdapter(ls);
+		}
+	}
+
+	public void setAdapter(List<Map<String, Object>> list) {
+		if (list != null) {
+			mySimpleAdapter.setData(list);
+		}
+	}
+
+	Runnable run_start = new Runnable() {
+		@Override
+		public void run() {
+			// TODO 自动生成的方法存根
+			try {
+				mSemaphore.acquire();
+			} catch (InterruptedException e) {
+				// TODO 自动生成的 catch 块
+				e.printStackTrace();
+			}
+			Message msg = Message.obtain();
+			if (ls.size() == 0) {
+				if (lbid.equals("")) {
+					ls = WebserviceImport.GetHPLBTree(30, 0, "0", new String[] {
+							"id", "name", "lev", "pid", "ord", "index" },
+							new String[] { "ID", "name", "lev", "PID", "ord",
+									"sindex" }, mSharedPreferences);
+				} else {
+					ls = WebserviceImport.GetHPLBTree(30,
+							Integer.parseInt(pid), "0", new String[] { "id",
+									"name", "lev", "pid", "ord", "index" },
+							new String[] { "ID", "name", "lev", "PID", "ord",
+									"sindex" }, mSharedPreferences);
+				}
+			} else {
+				if (ls != null) {
+					List<Map<String, Object>> lss = new ArrayList<Map<String, Object>>();
+					lss = WebserviceImport.GetHPLBTree(30,
+							Integer.parseInt((String) ls.get(0).get("pid")),
+							(String) ls.get(ls.size() - 1).get("id"),
+							new String[] { "id", "name", "lev", "pid", "ord",
+									"index" }, new String[] { "ID", "name",
+									"lev", "PID", "ord", "sindex" },
+							mSharedPreferences);
+
+					ls.addAll(lss);
+				}
+			}
+			msg.what = 11;
+			mhandler.sendMessage(msg);
+		}
+	};
+	Runnable run_in = new Runnable() {
+
+		@Override
+		public void run() {
+			// TODO 自动生成的方法存根
+			Message msg = Message.obtain();
+			ls.clear();
+			lbs = WebserviceImport.GetHPLBLBS(index, mSharedPreferences);
+			ls = WebserviceImport
+					.GetHPLBTree(30, Integer.parseInt(lbid), "0", new String[] {
+							"id", "name", "lev", "pid", "ord", "index" },
+							new String[] { "ID", "name", "lev", "PID", "ord",
+									"sindex" }, mSharedPreferences);
+			// pid = lbid;
+			msg.what = 21;
+			mhandler.sendMessage(msg);
+		}
+	};
+	Runnable run_out = new Runnable() {
+
+		@Override
+		public void run() {
+			// TODO 自动生成的方法存根
+			Message msg = new Message();
+			if (ls != null) {
+
+				if (index.length() - 2 < 0) {
+					lbs = "未选择";
+				} else {
+					index = index.substring(0, index.length() - 2);
+					lbs = WebserviceImport
+							.GetHPLBLBS(index, mSharedPreferences);
+				}
+				pid = WebserviceImport.GetHPLB_PID(lbid, mSharedPreferences);
+				ls = WebserviceImport.GetHPLBTree(30, Integer.parseInt(pid),
+						"0", new String[] { "id", "name", "lev", "pid", "ord",
+								"index" }, new String[] { "ID", "name", "lev",
+								"PID", "ord", "sindex" }, mSharedPreferences);
+				lbid = pid;// -----
+				msg.what = 21;
+			}
+			msg.setTarget(mhandler);
+			mhandler.sendMessage(msg);
+		}
+
+	};
+	private Handler mhandler = new Handler() {
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case 11:
+				lbtextView.setText("未选择");
+				setAdapter(ls);
+				mSemaphore.release();
+				// if (ls.size() < 6) {
+				// mListView.setPullLoadEnable(false);
+				// } else {
+				// mListView.setPullLoadEnable(true);
+				// }
+				// pro_dialog.dismiss();
+				break;
+			case 21:
+				setAdapter(ls);
+				// if (ls.size() < 6) {
+				// mListView.setPullLoadEnable(false);
+				// } else {
+				// mListView.setPullLoadEnable(true);
+				// }
+				if (lbs.equals("") || lbs == null) {
+					lbtextView.setText("未选择");
+				} else {
+					lbtextView.setText(lbs);
+				}
+				pro_dialog.dismiss();
+				break;
+			}
+
+		};
+	};
+
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		// TODO 自动生成的方法存根
+		Map<String, Object> map = (Map<String, Object>) arg0.getAdapter()
+				.getItem(arg2);
+		if (mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1) == 1) {
+			if (WebserviceImport.isOpenNetwork(this)) {
+				index = (String) map.get("index");
+				lbid = (String) map.get("id");
+				pid = (String) map.get("pid");
+				pro_dialog = ProgressDialog.show(this, null, "正在加载数据……");
+				cachedThreadPool.execute(run_in);
+				mListView.setStackFromBottom(false);
+			} else {
+				Toast.makeText(this, "网络未连接", Toast.LENGTH_SHORT).show();
+			}
+		} else if (mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1) == -1) {
+			index = (String) map.get("index");
+			lbid = (String) map.get("id");
+			pid = (String) map.get("pid");
+			if (lbs.equals("") || lbs == null) {
+				lbs = map.get("name").toString();
+			} else {
+				lbs = lbs + "\\" + map.get("name").toString();
+			}
+			lbtextView.setText(lbs);
+
+			ls.clear();
+			ls = dm.GetLB(lbid);
+			setAdapter(ls);
+			mListView.setStackFromBottom(false);
+		}
+
+	}
+
+	@Override
+	public void onClick(View v) {
+		// TODO 自动生成的方法存根
+		switch (v.getId()) {
+		case R.id.back:
+			finish();
+			break;
+		case R.id.ok:
+			Intent intent = new Intent();
+			if (lbs.equals("")) {
+				intent.putExtra("lb", "未选择");
+				intent.putExtra("lbid", lbid);
+				intent.putExtra("index", index);
+			} else {
+				intent.putExtra("lb", lbs);
+				intent.putExtra("lbid", lbid);
+				intent.putExtra("index", index);
+			}
+			setResult(1, intent);
+			finish();
+			break;
+//		case R.id.up:
+//			if (mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1) == 1) {
+//				if (index.length() >= 2) {
+//					if (WebserviceImport.isOpenNetwork(this)) {
+//						pro_dialog = ProgressDialog
+//								.show(this, null, "正在加载数据……");
+//						cachedThreadPool.execute(run_out);
+//					} else {
+//						Toast.makeText(this, "网络未连接", Toast.LENGTH_SHORT)
+//								.show();
+//					}
+//					// if (!pid.equals("0")) {
+//					// }else{
+//					// if(WebserviceImport.isOpenNetwork(this)){
+//					// pro_dialog = ProgressDialog.show(this, null, "正在加载数据……");
+//					// index = "";
+//					// lbid = "";
+//					// pid = "0";
+//					// lbs = "";
+//					// cachedThreadPool.execute(run_start);
+//					// }else{
+//					// Toast.makeText(this, "网络未连接", Toast.LENGTH_SHORT).show();
+//					// }
+//					// }
+//				}
+//			} else if (mSharedPreferences
+//					.getInt(ShareprefenceBean.IS_LOGIN, -1) == -1) {
+//				if (!pid.equals("0")) {
+//					// ----------获取返回之前的类别名称--------------
+//					List<Map<String, Object>> namelist = dm.GetLB_index(index);
+//					String lastlbs = namelist.get(0).get("name").toString();
+//					// ----------------------------------------
+//					ls = dm.GetLB(pid);
+//					List<Map<String, Object>> onelist = dm.GetLB_up(pid);
+//					index = (String) onelist.get(0).get("index");
+//					lbid = (String) onelist.get(0).get("id");
+//					pid = (String) onelist.get(0).get("pid");
+//					lbs = lbs.substring(0, lbs.lastIndexOf("\\" + lastlbs));
+//					if (lbs.equals("") || lbs == null) {
+//						lbtextView.setText("未选择");
+//					} else {
+//						lbtextView.setText(lbs);
+//					}
+//					setAdapter(ls);
+//				} else {
+//					ls = dm.GetLB("0");
+//					lbtextView.setText("未选择");
+//					index = "";
+//					lbid = "";
+//					pid = "0";
+//					lbs = "";
+//					setAdapter(ls);
+//				}
+//			}
+//
+//			break;
+		}
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		// TODO 自动生成的方法存根
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			finish();
+		}
+		return super.onKeyDown(keyCode, event);
+
+	}
+
+	@Override
+	public void onRefresh() {
+		// TODO 自动生成的方法存根
+		if (WebserviceImport.isOpenNetwork(this)) {
+			ls.clear();
+			mListView.setStackFromBottom(false);
+			// pro_dialog = ProgressDialog.show(this, null, "正在加载数据……");
+			cachedThreadPool.execute(run_start);
+		} else {
+			Toast.makeText(this, "网络未连接", Toast.LENGTH_SHORT).show();
+		}
+		onLoad();
+	}
+
+	@Override
+	public void onLoadMore() {
+		// TODO 自动生成的方法存根
+		if (WebserviceImport.isOpenNetwork(this)) {
+			// pro_dialog = ProgressDialog.show(this, null, "正在加载数据……");
+			cachedThreadPool.execute(run_start);
+		} else {
+			Toast.makeText(this, "网络未连接", Toast.LENGTH_SHORT).show();
+		}
+		mListView.stopLoadMore();
+		// mListView.setStackFromBottom(true);
+	}
+
+	private void onLoad() {
+		Calendar c = Calendar.getInstance();
+		String year = String.valueOf(c.get(Calendar.YEAR));
+		String month = String.valueOf(new DecimalFormat("00").format(c
+				.get(Calendar.MONTH) + 1));
+		String day = String.valueOf(new DecimalFormat("00").format(c
+				.get(Calendar.DAY_OF_MONTH)));
+		String hour = String.valueOf(new DecimalFormat("00").format(c
+				.get(Calendar.HOUR_OF_DAY)));
+		String minute = String.valueOf(new DecimalFormat("00").format(c
+				.get(Calendar.MINUTE)));
+		String refreshDate = year + "-" + month + "-" + day + " " + hour + ":"
+				+ minute;
+		mListView.stopRefresh();
+		mListView.setRefreshTime(refreshDate);
+	}
+
+	class MySimpleAdapter extends BaseAdapter {
+		private Context context;
+		private LayoutInflater inflater;
+		private List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+
+		public MySimpleAdapter(Context context) {
+			this.context = context;
+			inflater = LayoutInflater.from(context);
+		}
+
+		public void setData(List<Map<String, Object>> list) {
+			this.list = list;
+			notifyDataSetChanged();
+		}
+
+		@Override
+		public int getCount() {
+			// TODO 自动生成的方法存根
+			return list.size();
+		}
+
+		@Override
+		public Object getItem(int position) {
+			// TODO 自动生成的方法存根
+			return list.get(position);
+		}
+
+		@Override
+		public long getItemId(int position) {
+			// TODO 自动生成的方法存根
+			return position;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			// TODO 自动生成的方法存根
+			TextView textView = null;
+			if (convertView == null) {
+				convertView = inflater.inflate(
+						android.R.layout.simple_list_item_1, null);
+				textView = (TextView) convertView
+						.findViewById(android.R.id.text1);
+				convertView.setTag(textView);
+			} else {
+				textView = (TextView) convertView.getTag();
+			}
+			textView.setText(list.get(position).get("name").toString());
+			return convertView;
+		}
+
+	}
+}

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:id="@+id/datelayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingTop="12dp" >
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="3px"
+            android:layout_weight="1"
+            android:background="#999999" />
+
+        <TextView
+            android:id="@+id/dateTxtView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="2016-08-09" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2px"
+            android:layout_weight="1"
+            android:background="#999999" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/timeTxtView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/datelayout"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="10dp"
+        android:text="14:20:33"
+        android:textColor="#999999"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/doTxtView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/timeTxtView"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="15dp"
+        android:paddingTop="10dp"
+        android:text="创建单据"
+        android:textColor="#666666"
+        android:textSize="14sp" />
+    
+    <LinearLayout 
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignBottom="@id/doTxtView"
+        android:layout_alignTop="@id/datelayout"
+        android:orientation="horizontal">
+        
+        <View android:layout_width="4px"
+            android:layout_height="match_parent"
+            android:background="#cccccc"
+            android:layout_marginLeft="8px"
+            android:layout_marginRight="8px"/>
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/timeTxtView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignTop="@id/timeTxtView"
+        android:src="@drawable/circular_point" />
+    
+    
+
+</RelativeLayout>

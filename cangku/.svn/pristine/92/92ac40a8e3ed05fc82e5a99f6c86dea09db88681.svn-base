@@ -1,0 +1,50 @@
+package com.guantang.cangkuonline.dialog;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+
+public class CommonDialog extends Dialog {
+	
+	public Context context;
+	public LayoutInflater inflater;
+	public int layout;
+	
+	public interface DialogContentListener{
+		void contentExecute(View parent);
+	};
+	public DialogContentListener mDialogContentListener;
+	public void setDialogContentListener(DialogContentListener mDialogContentListener){
+		this.mDialogContentListener = mDialogContentListener;
+	}
+	
+	public CommonDialog(Context context) {
+		super(context);
+		// TODO 自动生成的构造函数存根
+		this.context = context;
+	}
+	
+	public CommonDialog(Context context,int layout){
+		super(context);
+		this.layout = layout;
+		this.context = context;
+	}
+	
+	public CommonDialog(Context context,int layout,int style){
+		super(context,style);
+		this.layout = layout;
+		this.context = context;
+	}
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO 自动生成的方法存根
+		super.onCreate(savedInstanceState);
+		inflater = LayoutInflater.from(context);
+		View view = inflater.inflate(layout, null);
+		setContentView(view);
+		mDialogContentListener.contentExecute(view);
+	}
+}

@@ -1,0 +1,202 @@
+package com.guantang.cangkuonline.activity;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.Window;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
+import android.widget.TextView;
+
+import com.guantang.cangkuonline.R;
+import com.guantang.cangkuonline.application.MyApplication;
+import com.guantang.cangkuonline.database.DataBaseHelper;
+import com.guantang.cangkuonline.database.DataBaseImport;
+import com.guantang.cangkuonline.database.DataBaseMethod;
+import com.guantang.cangkuonline.database.DataBaseOperateMethod;
+
+public class DepListActivity extends Activity implements OnClickListener,
+		OnItemClickListener {
+	private ImageButton backImageButton;
+	private Button confirmBtn, upBtn;
+	private TextView titleTextView, showTextView;
+	private ListView mListView;
+	private String[] str = { "id", "name", "deplevel", "PID", "depOrder",
+			"depindex" };
+	private String[] str1 = { DataBaseHelper.ID, DataBaseHelper.Name,
+			DataBaseHelper.depLevel, DataBaseHelper.PID,
+			DataBaseHelper.depOrder, DataBaseHelper.depindex };
+	private List<Map<String, Object>> ls = new ArrayList<Map<String, Object>>();
+	private List<Map<String, Object>> ls2 = new ArrayList<Map<String, Object>>();
+	private String depid = "", pid = "", depindex = "";
+	private DataBaseOperateMethod dm_op = new DataBaseOperateMethod(this);
+	private DataBaseMethod dm = new DataBaseMethod(this);
+	private SimpleAdapter adapter;
+	private int position;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO 自动生成的方法存根
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.dep_chose);
+		initControl();
+		init();
+	}
+
+	public void initControl() {
+		backImageButton = (ImageButton) findViewById(R.id.back);
+		confirmBtn = (Button) findViewById(R.id.ok);
+		upBtn = (Button) findViewById(R.id.up);
+		titleTextView = (TextView) findViewById(R.id.title);
+		showTextView = (TextView) findViewById(R.id.lbtext);
+		mListView = (ListView) findViewById(R.id.deplist);
+		mListView.setOnItemClickListener(this);
+		upBtn.setOnClickListener(this);
+		confirmBtn.setOnClickListener(this);
+		backImageButton.setOnClickListener(this);
+
+		mListView.setOnScrollListener(new OnScrollListener() {
+
+			@Override
+			public void onScrollStateChanged(AbsListView view, int scrollState) {
+				// TODO 自动生成的方法存根
+				if (scrollState == OnScrollListener.SCROLL_STATE_IDLE) {
+					position = mListView.getFirstVisiblePosition();
+
+				}
+			}
+
+			@Override
+			public void onScroll(AbsListView view, int firstVisibleItem,
+					int visibleItemCount, int totalItemCount){
+				// TODO 自动生成的方法存根
+
+			}
+		});
+	}
+
+	public void init() {
+		pid="0";
+		ls = dm.GetDep(pid);
+		if (ls != null) {
+			setAdapter(ls);
+		}
+	}
+
+	public void setAdapter(List<Map<String, Object>> lis) {
+		if (lis != null) {
+			adapter = new SimpleAdapter(this, lis, R.layout.list_item,
+					new String[] { "name" },
+					new int[] { R.id.list_item_textview });
+			mListView.setAdapter(adapter);
+			adapter.notifyDataSetChanged();
+			mListView.setSelection(position);
+		}
+	}
+
+	@Override
+	public void onClick(View v) {
+		// TODO 自动生成的方法存根
+		Intent intent = new Intent();
+		switch (v.getId()) {
+		case R.id.back:
+			finish();
+			break;
+		case R.id.up:
+			if ((!pid.equals(""))&&(pid != null)) {
+				ls = dm.GetDep(pid);
+				if (ls != null && ls.size() != 0) {
+					setAdapter(ls);
+					depid = pid;
+					if(!depid.equals("0")){
+						depindex=getIndex(depid);
+						showTextView.setText(GetIndexDepname(depindex));
+						pid = getpid(depid);
+					}else{
+						showTextView.setText("请选择部门");
+						depid="";
+					}
+				}
+			}
+			break;
+		case R.id.ok:
+			intent.putExtra("depname", showTextView.getText().toString());
+			intent.putExtra("depid", depid);
+			intent.putExtra("save", 1);
+			setResult(1, intent);
+			finish();
+			break;
+		}
+	}
+
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		// TODO 自动生成的方法存根
+		depid = (String) ls.get(arg2).get("id");
+		depindex = ls.get(arg2).get("depindex").toString();
+		showTextView.setText(GetIndexDepname(depindex));
+		pid = (String) ls.get(arg2).get(DataBaseHelper.PID);
+		ls = dm.GetDep(depid);
+		setAdapter(ls);
+	}
+
+	public String getIndex(String depid){
+		SQLiteDatabase db = MyApplication.getInstance().getDataBaseImport().getReadableDatabase();
+		Cursor c = db.rawQuery("select depindex from " + DataBaseHelper.TB_depTree
+					+ " where " + DataBaseHelper.ID + "='" + depid + "'",null);
+		String str="";
+		c.moveToFirst();
+		str=c.getString(c.getColumnIndex(DataBaseHelper.depindex));
+		c.close();
+		db.close();
+		return str;
+	}
+	
+	public String getpid(String depid) {
+		SQLiteDatabase db = MyApplication.getInstance().getDataBaseImport().getReadableDatabase();
+		Cursor c = db.rawQuery("select PID from " + DataBaseHelper.TB_depTree
+				+ " where " + DataBaseHelper.ID + "='" + depid + "'", null);
+		String str = "";
+		while (c.moveToNext()) {
+			str = c.getString(c.getColumnIndex(DataBaseHelper.PID));
+		}
+		c.close();
+		db.close();
+		return str;
+	}
+	
+	public String GetIndexDepname(String index) {
+		SQLiteDatabase db = MyApplication.getInstance().getDataBaseImport().getReadableDatabase();
+		Cursor c = null;
+		String lbs = "";
+		for (int i = 0; i < index.length(); i = i + 2) {
+			c = db.rawQuery("select name from " + DataBaseHelper.TB_depTree
+					+ " where " + DataBaseHelper.depindex + "='" + index.subSequence(0, i+2) + "'",
+					null);
+			c.moveToFirst();
+			if (lbs == null || lbs.equals("")) {
+				lbs = c.getString(0);
+			} else {
+				lbs = lbs + "\\" + c.getString(0);
+			}
+		}
+		c.close();
+		db.close();
+		return lbs;
+	}
+}

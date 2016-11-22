@@ -1,0 +1,652 @@
+package com.guantang.cangkuonline.fragment;
+
+import java.io.File;
+import java.sql.SQLData;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v4.app.Fragment;
+import android.telephony.TelephonyManager;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
+
+import com.guantang.cangkuonline.R;
+import com.guantang.cangkuonline.activity.BackUpActivity;
+import com.guantang.cangkuonline.activity.CKListActivity;
+import com.guantang.cangkuonline.activity.Helper;
+import com.guantang.cangkuonline.activity.Helper_user;
+import com.guantang.cangkuonline.activity.LoginActivity;
+import com.guantang.cangkuonline.activity.NewLoginActivity;
+import com.guantang.cangkuonline.activity.ParameterActivity;
+import com.guantang.cangkuonline.activity.PayNoticeActivity;
+import com.guantang.cangkuonline.activity.Pwd_prefer;
+import com.guantang.cangkuonline.activity.RecoverActivity;
+import com.guantang.cangkuonline.activity.ServerPref;
+import com.guantang.cangkuonline.activity.WebHelper;
+import com.guantang.cangkuonline.application.MyApplication;
+import com.guantang.cangkuonline.database.DataBaseHelper;
+import com.guantang.cangkuonline.database.DataBaseImport;
+import com.guantang.cangkuonline.database.DataBaseMethod;
+import com.guantang.cangkuonline.helper.UpdateVersion;
+import com.guantang.cangkuonline.shareprefence.ShareprefenceBean;
+import com.guantang.cangkuonline.static_constant.PathConstant;
+import com.guantang.cangkuonline.webservice.WebserviceImport;
+import com.guantang.cangkuonline.webservice.WebserviceImport_more;
+import com.umeng.analytics.MobclickAgent;
+import com.umeng.fb.FeedbackAgent;
+import com.umeng.update.UmengUpdateAgent;
+import com.umeng.update.UmengUpdateListener;
+import com.umeng.update.UpdateResponse;
+
+public class SettingFragment extends Fragment implements OnClickListener{
+	private ToggleButton matchBtn;
+	private SharedPreferences mSharedPreferences;
+	private LinearLayout pwdlayout,match_wsLayout,import_hpLayout,import_dwLayout,export_hpLayout,
+				export_djLayout,deldataLayout,helpLayout,ourLayout,export_dwLayout,updateLayout,
+				back_upLayout,recoverLayout,deletePicLayout,parameterLayout,yunLayout,yun_prefLayout,bg_prefLayout,
+				gx_dataLayout,del_hpLayout,ckLayout,dj_backLayout,server_prefLayout,imeiLayout,feedbackLayout,usernameLayout,
+				lixiannamelayout,ifpaylayout;
+	private TextView dwnameTextView,nameTextView,urltTextView,lixiannameTextView;
+	private Button loginBtn,cancelBtn;
+	private ProgressDialog pro_dialog;
+	private FeedbackAgent agent;
+	@Override
+	public void onAttach(Activity activity) {
+		// TODO 自动生成的方法存根
+		super.onAttach(activity);
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		// TODO 自动生成的方法存根
+		View v = inflater.inflate(R.layout.contentthree, null);
+		mSharedPreferences=getActivity().getSharedPreferences(ShareprefenceBean.SHAREPREFENCE_NAME, Context.MODE_PRIVATE);
+		return v;
+	}
+	
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		// TODO 自动生成的方法存根
+		super.onActivityCreated(savedInstanceState);
+		
+		matchBtn=(ToggleButton) getView().findViewById(R.id.match_but);
+		back_upLayout=(LinearLayout) getView().findViewById(R.id.back_up);
+		recoverLayout=(LinearLayout) getView().findViewById(R.id.recover);
+		deletePicLayout=(LinearLayout) getView().findViewById(R.id.DeletePicture);
+		pwdlayout=(LinearLayout) getView().findViewById(R.id.pwdlayout);
+		match_wsLayout=(LinearLayout) getView().findViewById(R.id.match_ws);
+		import_hpLayout=(LinearLayout) getView().findViewById(R.id.import_hp);
+		import_dwLayout=(LinearLayout) getView().findViewById(R.id.import_dw);
+		export_hpLayout=(LinearLayout) getView().findViewById(R.id.export_hp);
+		export_djLayout=(LinearLayout) getView().findViewById(R.id.export_dj);
+		export_dwLayout=(LinearLayout) getView().findViewById(R.id.export_dw);
+		parameterLayout=(LinearLayout) getView().findViewById(R.id.parameter);
+		gx_dataLayout=(LinearLayout) getView().findViewById(R.id.gx_data);
+		updateLayout=(LinearLayout) getView().findViewById(R.id.update);
+		deldataLayout=(LinearLayout) getView().findViewById(R.id.del_data);
+		del_hpLayout=(LinearLayout) getView().findViewById(R.id.del_hp);
+		helpLayout=(LinearLayout) getView().findViewById(R.id.help);
+		ourLayout=(LinearLayout) getView().findViewById(R.id.we);
+		yunLayout=(LinearLayout) getView().findViewById(R.id.yun);
+		yun_prefLayout=(LinearLayout) getView().findViewById(R.id.yun_pref);
+		bg_prefLayout=(LinearLayout) getView().findViewById(R.id.bg_pref);
+		ckLayout=(LinearLayout) getView().findViewById(R.id.ck);
+		dj_backLayout=(LinearLayout) getView().findViewById(R.id.dj_back);
+		server_prefLayout=(LinearLayout) getView().findViewById(R.id.server_pref);
+		imeiLayout= (LinearLayout) getView().findViewById(R.id.imei);
+		feedbackLayout= (LinearLayout) getView().findViewById(R.id.feedback);
+		usernameLayout = (LinearLayout) getView().findViewById(R.id.username);
+		dwnameTextView = (TextView) getView().findViewById(R.id.dwname);
+		nameTextView = (TextView) getView().findViewById(R.id.name);
+		urltTextView = (TextView) getView().findViewById(R.id.url);
+		lixiannamelayout = (LinearLayout) getView().findViewById(R.id.lixiannamelayout);
+		lixiannameTextView = (TextView) getView().findViewById(R.id.lixianname);
+		ifpaylayout = (LinearLayout) getView().findViewById(R.id.ifpay);
+		loginBtn=(Button) getView().findViewById(R.id.login);
+		cancelBtn = (Button) getView().findViewById(R.id.cancel);
+		
+		server_prefLayout.setOnClickListener(this);
+		imeiLayout.setOnClickListener(this);
+		feedbackLayout.setOnClickListener(this);
+		ckLayout.setOnClickListener(this);
+		dj_backLayout.setOnClickListener(this);
+		deletePicLayout.setOnClickListener(this);
+		matchBtn.setOnClickListener(this);
+		pwdlayout.setOnClickListener(this);
+		match_wsLayout.setOnClickListener(this);
+		import_hpLayout.setOnClickListener(this);
+		import_dwLayout.setOnClickListener(this);
+		export_hpLayout.setOnClickListener(this);
+		export_djLayout.setOnClickListener(this);
+		export_dwLayout.setOnClickListener(this);
+		del_hpLayout.setOnClickListener(this);
+		deldataLayout.setOnClickListener(this);
+		updateLayout.setOnClickListener(this);
+		helpLayout.setOnClickListener(this);
+		ourLayout.setOnClickListener(this);
+		back_upLayout.setOnClickListener(this);
+		recoverLayout.setOnClickListener(this);
+		parameterLayout.setOnClickListener(this);
+		yunLayout.setOnClickListener(this);
+		yun_prefLayout.setOnClickListener(this);
+		bg_prefLayout.setOnClickListener(this);
+		gx_dataLayout.setOnClickListener(this);
+		ifpaylayout.setOnClickListener(this);
+		dwnameTextView.setOnClickListener(this);
+		nameTextView.setOnClickListener(this);
+		loginBtn.setOnClickListener(this);
+		cancelBtn.setOnClickListener(this);
+		lixiannamelayout.setOnClickListener(this);
+		usernameLayout.setOnClickListener(this);
+		
+//		if(mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1)==1){
+//			
+//        	if(mSharedPreferences.getString(ShareprefenceBean.DWNAME_LOGIN, "")==null){
+//        		dwnameTextView.setText("单位名称异常");
+//        	}else{
+//        		if(mSharedPreferences.getString(ShareprefenceBean.DWNAME_LOGIN, "").equals("")){
+//        			dwnameTextView.setText(mSharedPreferences.getString(ShareprefenceBean.CUSTOM_DW, ""));
+//        		}else{
+//        			dwnameTextView.setText(mSharedPreferences.getString(ShareprefenceBean.DWNAME_LOGIN, ""));
+//        		}
+//        	}
+//        }else{
+//        	dwnameTextView.setText("未登录，点击登录");
+//        }
+		getDWname();
+		if(mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1)==1){
+			usernameLayout.setVisibility(View.VISIBLE);
+			lixiannamelayout.setVisibility(View.GONE);
+			loginBtn.setVisibility(View.GONE);
+			cancelBtn.setVisibility(View.VISIBLE);
+        	if(mSharedPreferences.getString(ShareprefenceBean.USERNAME, "").equals("")){
+        		nameTextView.setText("登录名异常");
+        	}else{ 
+        		nameTextView.setText(mSharedPreferences.getString(ShareprefenceBean.USERNAME, ""));
+        	}
+        	urltTextView.setText(mSharedPreferences.getString(ShareprefenceBean.NET_URL, "http://192.168.1.188:8080/"));
+        }else{
+        	lixiannameTextView.setText("用户名:"+mSharedPreferences.getString(ShareprefenceBean.USERNAME, ""));
+        }
+	}
+	public void onResume() {
+		super.onResume();
+		MobclickAgent.onResume(getActivity());
+		}
+	public void onPause() {
+		super.onPause();
+		MobclickAgent.onPause(getActivity());
+		}
+	
+	public void modifyDWName(){
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+				LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+		LinearLayout layout = new LinearLayout(getActivity());
+		layout.setOrientation(LinearLayout.HORIZONTAL);
+		layout.setGravity(Gravity.CENTER);
+		final EditText myEditText = new EditText(getActivity());
+		lp.setMargins(10, 10, 10, 10);
+		lp.gravity = Gravity.CENTER;
+		myEditText.setLayoutParams(lp);
+		myEditText.setBackgroundResource(R.drawable.dare_edittext);
+		myEditText.setPadding(10, 10, 10, 10);
+		layout.addView(myEditText);
+		builder.setTitle("自定义公司名称");
+		builder.setView(layout);
+		builder.setNegativeButton("恢复默认",
+				new DialogInterface.OnClickListener() {
+					
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO 自动生成的方法存根
+						mSharedPreferences.edit()
+								.putString(ShareprefenceBean.CUSTOM_DW, "")
+								.commit();
+						getDWname();
+						dialog.dismiss();
+					}
+				});
+		builder.setPositiveButton("确认",
+				new DialogInterface.OnClickListener() {
+					
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO 自动生成的方法存根
+						if (myEditText.getText().equals("")) {
+							Toast.makeText(getActivity(), "单位名称不能为空",
+									Toast.LENGTH_SHORT).show();
+						} else {
+							mSharedPreferences
+									.edit()
+									.putString(ShareprefenceBean.CUSTOM_DW,
+											myEditText.getText().toString())
+									.commit();
+							getDWname();
+							dialog.dismiss();
+						}
+					}
+				});
+		builder.create().show();
+	}
+	/**
+	 * 获取单位名称用于在title显示
+	 * */
+	public void getDWname() {
+		if (mSharedPreferences.getString(ShareprefenceBean.CUSTOM_DW, "").equals("")) {
+			if (mSharedPreferences.getInt(ShareprefenceBean.LOGIN_FLAG, 1) == 1) {
+				if (!mSharedPreferences.getString(
+						ShareprefenceBean.DWNAME_LOGIN, "").equals("")) {
+					dwnameTextView.setText(mSharedPreferences.getString(
+							ShareprefenceBean.DWNAME_LOGIN, "").toString());
+					lixiannameTextView.setText(mSharedPreferences.getString(
+							ShareprefenceBean.DWNAME_LOGIN, "").toString());
+				} else {
+					dwnameTextView.setText("冠唐仓库管理系统");
+					lixiannameTextView.setText("冠唐仓库管理系统");
+				}
+			} else if (mSharedPreferences.getInt(ShareprefenceBean.LOGIN_FLAG,
+					1) == 0) {
+				if (!mSharedPreferences.getString(
+						ShareprefenceBean.IDN_ALONE_URL, "").equals("")) {
+					dwnameTextView.setText(mSharedPreferences.getString(
+							ShareprefenceBean.IDN_ALONE_URL, "").toString());
+					lixiannameTextView.setText(mSharedPreferences.getString(
+							ShareprefenceBean.IDN_ALONE_URL, "").toString());
+				} else {
+					dwnameTextView.setText("冠唐仓库管理系统");
+					lixiannameTextView.setText("冠唐仓库管理系统");
+				}
+			}
+		} else {
+			dwnameTextView.setText(mSharedPreferences.getString(
+					ShareprefenceBean.CUSTOM_DW, ""));
+			lixiannameTextView.setText(mSharedPreferences.getString(
+					ShareprefenceBean.CUSTOM_DW, ""));
+		}
+	}
+	
+	@Override
+	public void onClick(View v) {
+		// TODO 自动生成的方法存根
+		Intent intent = new Intent();
+		switch(v.getId()){
+		case R.id.username:
+			modifyDWName();
+			break;
+		case R.id.lixiannamelayout:
+			modifyDWName();
+			break;
+		case R.id.cancel:
+			if(mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1)==1){
+				pro_dialog = ProgressDialog.show(getActivity(), null, "正在退出");
+				new Thread(ExitloadRun).start();
+			}
+			break;
+		case R.id.login:
+			intent.setClass(getActivity(),NewLoginActivity.class);
+		    startActivity(intent);
+		    getActivity().finish();
+			break;
+		case R.id.gx_data:
+			intent.setClass(getActivity(), WebHelper.class);
+			startActivity(intent);
+			break;
+		case R.id.pwdlayout:
+			if(mSharedPreferences.getInt(ShareprefenceBean.IS_LOGIN, -1)==1){
+				if(!mSharedPreferences.getString(ShareprefenceBean.DWNAME_LOGIN, "").equals("测试")){
+					intent.setClass(getActivity(), Pwd_prefer.class);
+					startActivity(intent);
+				}else{
+					Toast.makeText(getActivity(), "测试账户不能修改密码", Toast.LENGTH_SHORT).show();
+				}
+			}else{
+				Toast.makeText(getActivity(), "请在线登录修改密码", Toast.LENGTH_SHORT).show();
+			}
+			break;
+		case R.id.parameter:
+			intent.setClass(getActivity(), ParameterActivity.class);
+			startActivity(intent);
+			break;
+		case R.id.del_hp:
+			AlertDialog.Builder builder2=new AlertDialog.Builder(getActivity());
+			builder2.setTitle("警告");
+			builder2.setMessage("确认清空货品列表？");
+			builder2.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					// TODO Auto-generated method stub
+					DataBaseMethod dm=new DataBaseMethod(getActivity());
+					dm.del_hp();
+					mSharedPreferences.edit().putString(ShareprefenceBean.UPDATE_TIME_HP, "未更新数据").commit();
+					Toast.makeText(getActivity(), "清空成功", Toast.LENGTH_SHORT).show();
+				}
+			});
+			builder2.setNegativeButton("取消", new DialogInterface.OnClickListener(){
+
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					// TODO Auto-generated method stub
+					dialog.dismiss();
+				}
+			});
+			builder2.create().show();
+			break;
+		case R.id.del_data:
+			AlertDialog.Builder builder=new AlertDialog.Builder(getActivity());
+			builder.setTitle("警告");
+			builder.setMessage("确认清空数据库？数据一旦删除，不可恢复，请谨慎操作。");
+			builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					// TODO Auto-generated method stub
+					getActivity().deleteDatabase(DataBaseHelper.DB);
+					mSharedPreferences.edit().putString("update_time_hp", "未更新数据").commit();
+					mSharedPreferences.edit().putString("update_time_lb", "未更新数据").commit();
+					mSharedPreferences.edit().putString("update_time_dw", "未更新数据").commit();
+					mSharedPreferences.edit().putString("update_time_type", "未更新数据").commit();
+					mSharedPreferences.edit().putString("update_time_ck", "未更新数据").commit();
+					Toast.makeText(getActivity(), "清空成功", Toast.LENGTH_SHORT).show();
+					dialog.dismiss();
+				}
+			});
+			builder.setNegativeButton("取消", new DialogInterface.OnClickListener(){
+				
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					// TODO Auto-generated method stub
+					dialog.dismiss();
+				}
+			});
+			builder.create().show();
+			break;
+		case R.id.back_up:
+			intent.setClass(getActivity(), BackUpActivity.class);
+			startActivity(intent);
+			break;
+		case R.id.recover:
+			intent.setClass(getActivity(), RecoverActivity.class);
+			startActivity(intent);
+			break;
+		case R.id.DeletePicture:
+			deletePic("");
+			Toast.makeText(getActivity(), "本地图片删除成功", Toast.LENGTH_SHORT).show();
+			break;
+		case R.id.help:
+			intent.setClass(getActivity(), Helper_user.class);
+			startActivity(intent);
+			break;
+		case R.id.ifpay:
+			intent.setClass(getActivity(), PayNoticeActivity.class);
+			startActivity(intent);
+			break;
+		case R.id.imei:
+			AlertDialog.Builder builder3 = new AlertDialog.Builder(getActivity());
+			
+			builder3.setTitle("本机串号");
+			builder3.setMessage(MyApplication.getInstance().getIEMI());
+			builder3.setPositiveButton("复制",
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// TODO Auto-generated method stub
+							dialog.dismiss();
+							copy(MyApplication.getInstance().getIEMI(), getActivity());
+						}
+					});
+			builder3.setNegativeButton("取消",
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// TODO Auto-generated method stub
+							dialog.dismiss();
+						}
+					});
+			builder3.create().show();
+			break;
+		case R.id.feedback:
+			if(WebserviceImport.isOpenNetwork(getActivity())){
+				agent = new FeedbackAgent(getActivity());
+				agent.sync();
+				agent.startFeedbackActivity();
+			}else {
+				Toast.makeText(getActivity(), "网络未连接",
+						Toast.LENGTH_SHORT).show();
+			}
+			break;
+		case R.id.server_pref:
+			intent.setClass(getActivity(), ServerPref.class);
+			startActivity(intent);
+			break;
+		case R.id.we:
+			intent.setClass(getActivity(), Helper.class);
+			startActivity(intent);
+			break;
+		case R.id.update:
+//			final Context context = getActivity();
+//			UmengUpdateAgent.setUpdateAutoPopup(false);
+			final Context context = getActivity();
+			UmengUpdateAgent.setUpdateAutoPopup(false);
+//			UmengUpdateAgent.setUpdateOnlyWifi(false);
+//			UmengUpdateAgent.forceUpdate(getActivity());
+//			UmengUpdateAgent.setUpdateListener(new UmengUpdateListener() {
+//			        @Override
+//			        public void onUpdateReturned(int updateStatus,UpdateResponse updateInfo) {
+//			            switch (updateStatus) {
+//			            case 0: // has update
+//			                UmengUpdateAgent.showUpdateDialog(getActivity(), updateInfo);
+//			                break;
+//			            case 1: // has no update
+//			            	Toast.makeText(context, "没有更新", Toast.LENGTH_SHORT).show();
+//			                break;
+//			            case 2: // none wifi
+//			            	Toast.makeText(context, "没有wifi连接， 只在wifi下更新", Toast.LENGTH_SHORT).show();
+//			                break;
+//			            case 3: // time out
+//			            	Toast.makeText(context, "超时", Toast.LENGTH_SHORT).show();
+//			                break;
+//			            }
+//			        }
+//
+//					
+//			});
+//			UmengUpdateAgent.update(getActivity());
+			
+			if(WebserviceImport.isOpenNetwork(getActivity())){
+				new ApkUpdateAsyncTesk().execute();
+			}else{
+				Toast.makeText(getActivity(), "网络未连接", Toast.LENGTH_SHORT).show();
+			}
+			
+			break;
+		}
+	}
+			UmengUpdateAgent.forceUpdate(getActivity());
+			UmengUpdateAgent.setUpdateListener(new UmengUpdateListener() {
+			        @Override
+			        public void onUpdateReturned(int updateStatus,UpdateResponse updateInfo) {
+			            switch (updateStatus) {
+			            case 0: // has update
+			                UmengUpdateAgent.showUpdateDialog(getActivity(), updateInfo);
+			                break;
+			            case 1: // has no update
+			            	Toast.makeText(context, "没有更新", Toast.LENGTH_SHORT).show();
+			                break;
+			            case 2: // none wifi
+			            	Toast.makeText(context, "没有wifi连接， 只在wifi下更新", Toast.LENGTH_SHORT).show();
+			                break;
+			            case 3: // time out
+			            	Toast.makeText(context, "超时", Toast.LENGTH_SHORT).show();
+			                break;
+			            }
+			        }
+
+	class ApkUpdateAsyncTesk extends AsyncTask<Void, Void, String>{
+
+		@Override
+		protected String doInBackground(Void... params) {
+			// TODO 自动生成的方法存根
+			String json = WebserviceImport_more.AndroidApkUpdate(MyApplication.getInstance().getVisionCode());
+			return json;
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			// TODO 自动生成的方法存根
+			super.onPostExecute(result);
+			try {
+				JSONObject jsonObject = new JSONObject(result);
+				switch(jsonObject.getInt("Status")){
+				case 1:
+					JSONObject DatajsonObject = new JSONObject(jsonObject.getString("Data"));
+					final String apkUrlString=DatajsonObject.getString("ApkUrl");
+					String UpdateText = DatajsonObject.getString("UpdateTxt");
+					final String apkName = (String) apkUrlString.subSequence(apkUrlString.lastIndexOf("/"), apkUrlString.length());
+					
+					AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+					builder.setTitle("更新提示");
+					builder.setMessage(UpdateText);
+					builder.setPositiveButton("更新", new DialogInterface.OnClickListener() {
+						
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// TODO 自动生成的方法存根
+							new UpdateVersion(getActivity(), apkName, apkUrlString);
+							dialog.dismiss();
+						}
+					});
+					builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+						
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// TODO 自动生成的方法存根
+							dialog.dismiss();
+						}
+					});
+					builder.create().show();
+					break;
+				case -1:
+					Toast.makeText(getActivity(), "已是最新版本，不需要更新", Toast.LENGTH_SHORT).show();
+					break;
+				default:
+					Toast.makeText(getActivity(), jsonObject.getString("Message"), Toast.LENGTH_SHORT).show();
+					break;
+				}
+			} catch (JSONException e) {
+				// TODO 自动生成的 catch 块
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void deletePic(String fileName){
+    	File file = new File(PathConstant.PATH_photo+fileName);
+    	File[] fileList = file.listFiles();
+    	SQLiteDatabase db = MyApplication.getInstance().getDataBaseImport().getReadableDatabase();
+    	for(File f : fileList){
+    		if(f.isDirectory()){
+    			deletePic(f.getName());//图片文件里面没有文件夹，一般不会执行的
+    		}else{
+    			db.execSQL("delete from "+DataBaseHelper.TB_PIC+" where "+DataBaseHelper.ImageURL+" = '"+f.getName()+"'");
+    			f.delete();
+    		}
+    	}
+    	db.close();
+    }
+	
+	Runnable ExitloadRun = new Runnable(){
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			Message msg = Message.obtain();
+			synchronized (msg) {
+				msg.what=WebserviceImport.delMEI(MyApplication.getInstance().getIEMI(),mSharedPreferences);
+				msg.setTarget(mHandler3);
+				mHandler3.sendMessage(msg);
+			}
+		} 
+	 };
+	 @SuppressLint("HandlerLeak")
+		Handler mHandler3= new Handler(){
+			 public void handleMessage(Message msg){
+				 pro_dialog.dismiss();
+				 switch(msg.what){
+				 case 1:
+					usernameLayout.setVisibility(View.GONE);
+					lixiannamelayout.setVisibility(View.VISIBLE);
+					loginBtn.setVisibility(View.VISIBLE);
+					cancelBtn.setVisibility(View.GONE);
+					mSharedPreferences.edit().putInt(ShareprefenceBean.IS_LOGIN, -1).commit();
+					Toast.makeText(getActivity(), "退出成功", Toast.LENGTH_SHORT).show();
+					 break;
+				 case -1:
+					 Toast.makeText(getActivity(), "退出失败", Toast.LENGTH_SHORT).show();
+					 break;
+				 case -2:
+					 Toast.makeText(getActivity(), "头文件验证失败", Toast.LENGTH_SHORT).show();
+					 break;
+				 case -3:
+					 Toast.makeText(getActivity(), "程序处理异常", Toast.LENGTH_SHORT).show();
+					 break;
+				 case -4:
+					usernameLayout.setVisibility(View.GONE);
+					lixiannamelayout.setVisibility(View.VISIBLE);
+					loginBtn.setVisibility(View.VISIBLE);
+					cancelBtn.setVisibility(View.GONE);
+					mSharedPreferences.edit().putInt(ShareprefenceBean.IS_LOGIN, -1).commit();
+					Toast.makeText(getActivity(), "未知信息", Toast.LENGTH_SHORT).show();
+					 break;
+				 case -5:
+					 Toast.makeText(getActivity(), "网络连接异常", Toast.LENGTH_SHORT).show();
+					 break;
+				 case -6:
+					 Toast.makeText(getActivity(), "数据解析错误", Toast.LENGTH_SHORT).show();
+					 break;
+				 }
+			 }
+	 };
+	
+	/**
+	 * 复制功能
+	 * */
+	public void copy(String str, Context context) {
+		int version_code = android.os.Build.VERSION.SDK_INT;
+		ClipboardManager cmb = (ClipboardManager) context
+				.getSystemService(Context.CLIPBOARD_SERVICE);
+		if (version_code < 11) {
+			ClipData textCd = ClipData.newPlainText("kkk", str.trim());
+			cmb.setPrimaryClip(textCd);
+		} else {
+			cmb.setText(str.trim());
+		}
+	}
+}
